@@ -1,15 +1,32 @@
 #include "my_ls.h"
 
-int compare_mtime(const void *a, const void *b) {
-    time_t time_a = ((FileEntry *)a)->mtime;
-    time_t time_b = ((FileEntry *)b)->mtime;
-    return (time_b - time_a);
+// Bubble sort implementation for sorting by modification time
+void bubble_sort_mtime(FileEntry *files, int count) {
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = 0; j < count - i - 1; j++) {
+            if (files[j].mtime < files[j + 1].mtime) {
+                FileEntry temp = files[j];
+                files[j] = files[j + 1];
+                files[j + 1] = temp;
+            }
+        }
+    }
 }
 
-int compare_name(const void *a, const void *b) {
-    return strcmp(((FileEntry *)a)->name, ((FileEntry *)b)->name);
+// Bubble sort implementation for sorting by name (lexicographical order)
+void bubble_sort_name(FileEntry *files, int count) {
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = 0; j < count - i - 1; j++) {
+            if (strcmp(files[j].name, files[j + 1].name) > 0) {
+                FileEntry temp = files[j];
+                files[j] = files[j + 1];
+                files[j + 1] = temp;
+            }
+        }
+    }
 }
 
+// List the contents of a directory
 void list_directory(const char *path, int show_all, int sort_by_time) {
     DIR *dir;
     struct dirent *entry;
@@ -54,11 +71,13 @@ void list_directory(const char *path, int show_all, int sort_by_time) {
 
     closedir(dir);
 
+    // Sort by modification time if -t option is specified
     if (sort_by_time) {
-        qsort(files, file_count, sizeof(FileEntry), compare_mtime);
+        bubble_sort_mtime(files, file_count);
+    } else {
+        // Sort by name (lexicographical order)
+        bubble_sort_name(files, file_count);
     }
-
-    qsort(files, file_count, sizeof(FileEntry), compare_name);
 
     for (int i = 0; i < file_count; i++) {
         write(1, files[i].name, strlen(files[i].name));
@@ -73,6 +92,7 @@ int main(int argc, char *argv[]) {
     int show_all = 0;
     int sort_by_time = 0;
 
+    // Parse the options -a and -t
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
             for (int j = 1; argv[i][j]; j++) {
@@ -80,12 +100,16 @@ int main(int argc, char *argv[]) {
                     show_all = 1;
                 } else if (argv[i][j] == 't') {
                     sort_by_time = 1;
+                } else {
+                    printf("Unknown option: %c\n", argv[i][j]);
+                    return EXIT_FAILURE;
                 }
             }
         }
     }
 
-    if (argc == 1 || (argc == 2 && argv[1][0] == '-' && argv[1][1] == '\0')) {
+    // If no directories are passed, list current directory
+    if (argc == 1 || (argc == 2 && argv[1][0] == '-')) {
         list_directory(".", show_all, sort_by_time);
     } else {
         for (int i = 1; i < argc; i++) {
@@ -93,13 +117,11 @@ int main(int argc, char *argv[]) {
                 struct stat path_stat;
                 if (lstat(argv[i], &path_stat) == -1) {
                     perror("lstat");
-                    exit(EXIT_FAILURE);
+                    return EXIT_FAILURE;
                 }
 
                 if (S_ISDIR(path_stat.st_mode)) {
-                    write(1, "Contents of directory: ", 22);
-                    write(1, argv[i], strlen(argv[i]));
-                    write(1, ":\n", 2);
+                    printf("Contents of directory: %s:\n", argv[i]);
                     list_directory(argv[i], show_all, sort_by_time);
                 } else {
                     write(1, argv[i], strlen(argv[i]));
