@@ -1,11 +1,5 @@
 #include "my_ls.h"
 
-typedef struct FileEntry {
-    char *name;
-    time_t mtime;
-    int is_dir;
-} FileEntry;
-
 int compare_mtime(const void *a, const void *b) {
     time_t time_a = ((FileEntry *)a)->mtime;
     time_t time_b = ((FileEntry *)b)->mtime;

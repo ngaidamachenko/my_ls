@@ -10,7 +10,7 @@
 #include <dirent.h>
 #include <unistd.h>
 
-#define MAX_FILENAME 256
+#define MAX_FILENAME 1024
 
 typedef struct FileEntry {
     char *name;
