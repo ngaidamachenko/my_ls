@@ -111,12 +111,12 @@ void list_directory(const char *path, int show_all, int sort_by_time) {
 }
 
 int main(int argc, char *argv[]) {
-    int show_all = 0;   //Flag for showing all files (including hidden)
-    int sort_by_time = 0; //Flag for sorting by modification time
+    int show_all = 0;   // Flag for showing all files (including hidden)
+    int sort_by_time = 0; // Flag for sorting by modification time
+    int directory_provided = 0; // Flag to check if a directory was provided
 
-    //Command line arguments
     for (int i = 1; i < argc; i++) {
-        if (argv[i][0] == '-') { // Check for options
+        if (argv[i][0] == '-') { 
             for (int j = 1; argv[i][j]; j++) {
                 if (argv[i][j] == 'a') {
                     show_all = 1; // Set flag for showing all files
@@ -124,15 +124,18 @@ int main(int argc, char *argv[]) {
                     sort_by_time = 1; // Set flag for sorting by time
                 }
             }
+        } else {
+            directory_provided = 1;
         }
     }
 
-    //If no operands are given, list current directory
-    if (argc == 1 || (argc == 2 && argv[1][0] == '-' && argv[1][1] == '\0')) {
-        list_directory(".", show_all, sort_by_time);
+    // If no directory is provided, list the current directory
+    if (!directory_provided) {
+        list_directory(".", show_all, sort_by_time); // List current directory
     } else {
+        // Loop again to list directories or files
         for (int i = 1; i < argc; i++) {
-            if (argv[i][0] != '-') { //Ignore options
+            if (argv[i][0] != '-') {
                 struct stat path_stat;
                 //Get statistics for the specified file or directory
                 if (lstat(argv[i], &path_stat) == -1) {
@@ -140,15 +143,14 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 }
 
-                //If it's a directory, list its contents
+                // If it's a directory, list its contents
                 if (S_ISDIR(path_stat.st_mode)) {
                     write(1, "Contents of directory: ", 22);
-                    write(1, argv[i], my_strlen(argv[i])); 
+                    write(1, argv[i], my_strlen(argv[i]));
                     write(1, ":\n", 2);
                     list_directory(argv[i], show_all, sort_by_time);
-                } 
-                else {// If it's a regular file, just print its name
-                    write(1, argv[i], my_strlen(argv[i])); 
+                } else { // If it's a regular file, just print its name
+                    write(1, argv[i], my_strlen(argv[i]));
                     write(1, "\n", 1);
                 }
             }
